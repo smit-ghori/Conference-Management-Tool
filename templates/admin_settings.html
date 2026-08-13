@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Account & Credentials Settings | CMT Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">
+    <h2><i class="fa-solid fa-user-gear" style="color: var(--primary-navy);"></i> Administrator Settings</h2>
+    <p>Manage your site administrator profile, update your Admin ID (Email), and change account security password.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('admin') }}" class="btn btn-outline">
+      <i class="fa-solid fa-arrow-left"></i> Back to Admin Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="form-card" style="max-width: 600px; margin: 0 auto;">
+  <form action="{{ url_for('admin_settings') }}" method="POST">
+    
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 16px; border-bottom: 2px solid var(--border-light); padding-bottom: 8px;">
+      <i class="fa-solid fa-id-badge"></i> Update Administrator Profile & Admin ID
+    </h3>
+
+    <div class="form-group">
+      <label class="form-label" for="name"><i class="fa-solid fa-user"></i> Administrator Name</label>
+      <input type="text" name="name" id="name" value="{{ admin_user.name }}" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="email"><i class="fa-solid fa-at"></i> Admin ID / Login Email</label>
+      <input type="email" name="email" id="email" value="{{ admin_user.email }}" class="form-control" required>
+      <small style="color: var(--text-muted); display: block; margin-top: 4px;">This is your primary login ID for system administrative access.</small>
+    </div>
+
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy); margin-top: 28px; margin-bottom: 16px; border-bottom: 2px solid var(--border-light); padding-bottom: 8px;">
+      <i class="fa-solid fa-lock" style="color: var(--accent-gold);"></i> Change Password
+    </h3>
+
+    <div class="form-group">
+      <label class="form-label" for="current_password"><i class="fa-solid fa-key"></i> Current Password <span style="color: var(--danger-red);">*</span></label>
+      <input type="password" name="current_password" id="current_password" class="form-control" placeholder="Enter current password to authorize changes" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="new_password"><i class="fa-solid fa-shield-halved"></i> New Password</label>
+        <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Leave blank if unchanged">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password"><i class="fa-solid fa-shield-halved"></i> Confirm New Password</label>
+        <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Re-enter new password">
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px;">
+      <a href="{{ url_for('admin') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save Admin Profile & Password
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

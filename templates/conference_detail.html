@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ conference.acronym }} - {{ conference.title }} | CMT Portal{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white rounded-2xl p-6 md:p-10 mb-8 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+  <div>
+    <div class="flex flex-wrap gap-2 items-center mb-3">
+      <span class="bg-white/10 border border-white/20 px-3 py-1 rounded-md text-xs font-bold text-slate-200">
+        {{ conference.department.name }} ({{ conference.department_code }})
+      </span>
+      <span class="badge badge-{{ conference.state }} text-xs">
+        {{ conference.state|upper }}
+      </span>
+    </div>
+    <h2 class="text-xl md:text-3xl font-black text-white leading-tight mb-2">{{ conference.title }}</h2>
+    <p class="text-sm md:text-base text-slate-400 flex items-center gap-2">
+      <i class="fa-solid fa-location-dot text-amber-400"></i> {{ conference.venue }} &bull; {{ conference.start_date }} - {{ conference.end_date }}
+    </p>
+  </div>
+  <div class="w-full lg:w-auto shrink-0">
+    {% if conference.state != 'past' %}
+      <a href="{{ url_for('submit', conf_id=conference.id) }}" class="btn btn-gold text-sm md:text-base px-6 py-3 w-full lg:w-auto text-center font-bold">
+        <i class="fa-solid fa-paper-plane"></i> Submit Abstract Now
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <!-- Left Column (Takes 2 cols on Laptop) -->
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm">
+      <h3 class="text-lg font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-align-left text-blue-700"></i> Conference Overview
+      </h3>
+      <p class="text-sm md:text-base text-slate-700 leading-relaxed mb-6">
+        {{ conference.description }}
+      </p>
+
+      {% if conference.call_for_papers %}
+        <h4 class="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-scroll text-amber-600"></i> Call for Papers & Tracks
+        </h4>
+        <div class="bg-slate-50 border-l-4 border-amber-500 p-4 rounded-r-xl text-sm text-slate-700 mb-6 leading-relaxed">
+          {{ conference.call_for_papers }}
+        </div>
+      {% endif %}
+
+      {% if conference.key_speakers %}
+        <h4 class="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-user-tie text-blue-700"></i> Keynote & Eminent Speakers
+        </h4>
+        <p class="text-sm text-slate-700 bg-blue-50/70 p-4 rounded-xl border border-blue-100 mb-6">
+          {{ conference.key_speakers }}
+        </p>
+      {% endif %}
+
+      {% if conference.report_summary %}
+        <h4 class="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-emerald-600"></i> Proceedings & Outcome Report
+        </h4>
+        <p class="text-sm text-slate-700 bg-emerald-50/70 p-4 rounded-xl border border-emerald-100">
+          {{ conference.report_summary }}
+        </p>
+      {% endif %}
+    </div>
+
+    {% if conference.schedules %}
+      <div class="schedule-section bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+        <div class="schedule-header flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+          <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-amber-500"></i> Official Event Timetable
+          </h3>
+        </div>
+        <div class="schedule-timeline space-y-4 relative pl-5 border-l-2 border-slate-200">
+          {% for item in conference.schedules %}
+            <div class="schedule-item bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <div class="schedule-meta flex justify-between items-center text-xs text-slate-500 mb-1">
+                <span class="schedule-time font-bold text-amber-600">{{ item.time_slot }}</span>
+                <span class="schedule-location bg-slate-200 text-slate-800 px-2 py-0.5 rounded font-semibold">{{ item.location }}</span>
+              </div>
+              <div class="schedule-title text-sm md:text-base font-bold text-slate-900">{{ item.session_title }}</div>
+              {% if item.speaker %}
+                <div class="schedule-speaker text-xs text-slate-500 mt-1"><i class="fa-solid fa-user-tie"></i> {{ item.speaker }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Sidebar Column -->
+  <div class="space-y-6">
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-download text-blue-700"></i> Conference Materials
+      </h3>
+      <p class="text-xs text-slate-500 mb-4">
+        Download official conference brochure and flyer published by the organizing committee.
+      </p>
+
+      <div class="space-y-3">
+        {% if conference.brochure_filename %}
+          <a href="{{ url_for('download_file', file_type='brochures', filename=conference.brochure_filename) }}" class="btn btn-outline w-full flex items-center gap-3 p-3 text-left">
+            <i class="fa-solid fa-file-pdf text-red-600 text-2xl shrink-0"></i>
+            <div>
+              <div class="font-bold text-xs md:text-sm text-slate-900">Detailed Brochure</div>
+              <div class="text-[11px] text-slate-500">PDF Document &bull; Schedule & Rules</div>
+            </div>
+          </a>
+        {% endif %}
+
+        {% if conference.flyer_filename %}
+          <a href="{{ url_for('download_file', file_type='flyers', filename=conference.flyer_filename) }}" class="btn btn-outline w-full flex items-center gap-3 p-3 text-left">
+            <i class="fa-solid fa-image text-purple-600 text-2xl shrink-0"></i>
+            <div>
+              <div class="font-bold text-xs md:text-sm text-slate-900">Event Flyer</div>
+              <div class="text-[11px] text-slate-500">Promotional Poster</div>
+            </div>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <h3 class="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-info-circle text-amber-600"></i> Submission Key Info
+      </h3>
+      <ul class="conf-meta-list text-xs md:text-sm text-slate-600 space-y-3 mb-6">
+        <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-blue-700 w-4"></i> <strong>Tracks:</strong> Paper & Poster</li>
+        <li class="flex items-center gap-2"><i class="fa-solid fa-indian-rupee-sign text-blue-700 w-4"></i> <strong>Fee:</strong> ₹{{ "%.0f"|format(conference.registration_fee) }}</li>
+        {% if conference.submission_deadline %}
+          <li class="flex items-center gap-2"><i class="fa-solid fa-hourglass-half text-red-600 w-4"></i> <strong>Deadline:</strong> {{ conference.submission_deadline }}</li>
+        {% endif %}
+        <li class="flex items-center gap-2"><i class="fa-solid fa-building text-blue-700 w-4"></i> <strong>Organizer:</strong> IEEE LJKU & CODEAPEX</li>
+      </ul>
+
+      {% if conference.state != 'past' %}
+        <a href="{{ url_for('submit', conf_id=conference.id) }}" class="btn btn-primary w-full py-2.5 text-center text-sm font-bold">
+          <i class="fa-solid fa-paper-plane"></i> Submit Abstract Now
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

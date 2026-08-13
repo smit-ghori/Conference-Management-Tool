@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Official Registration Receipt - {{ submission.abstract_id }} | CMT Portal{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px; text-align: center;" class="btn-print-hide">
+  <button onclick="window.print()" class="btn btn-primary btn-gold" style="padding: 12px 24px; font-size: 1rem;">
+    <i class="fa-solid fa-print"></i> Print Official Receipt / Save as PDF
+  </button>
+  <a href="{{ url_for('home') }}" class="btn btn-outline" style="margin-left: 12px;">
+    <i class="fa-solid fa-house"></i> Return to Home
+  </a>
+</div>
+
+<div class="receipt-card">
+  
+  <div class="receipt-header">
+    <div style="font-size: 0.85rem; font-weight: 800; color: var(--accent-gold); letter-spacing: 1px; margin-bottom: 4px;">
+      LOK JAGRUTI KENDRA UNIVERSITY
+    </div>
+    <h2>Conference Registration & Payment Receipt</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+      Organized by IEEE Student Branch & CODEAPEX Technical Event
+    </p>
+  </div>
+
+  <div class="receipt-grid">
+    <div class="receipt-row">
+      <span class="label">Abstract ID</span>
+      <span class="value" style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 800;">{{ submission.abstract_id }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Transaction Ref</span>
+      <span class="value">{{ submission.payment_ref or 'N/A' }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Author Name</span>
+      <span class="value">{{ submission.author_name }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Author Email</span>
+      <span class="value">{{ submission.author_email }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Institution / Organization</span>
+      <span class="value">{{ submission.institution }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Department</span>
+      <span class="value">{{ submission.department_code }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Target Conference</span>
+      <span class="value">{{ submission.conference.acronym }} - {{ submission.conference.title }}</span>
+    </div>
+    <div class="receipt-row">
+      <span class="label">Presentation Type</span>
+      <span class="value">{{ submission.presentation_type }}</span>
+    </div>
+  </div>
+
+  <div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px;">
+    <div class="receipt-row" style="margin-bottom: 8px;">
+      <span class="label">Paper Title</span>
+      <span class="value" style="font-size: 1rem; color: var(--primary-navy);">{{ submission.paper_title }}</span>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--border-light); padding-top: 20px;">
+    <div>
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Payment & Verification Status</div>
+      <div style="margin-top: 4px; display: flex; gap: 8px;">
+        <span class="badge badge-paid"><i class="fa-solid fa-check"></i> Fee Paid</span>
+        <span class="badge badge-current"><i class="fa-solid fa-user-check"></i> {{ submission.verification_status }}</span>
+      </div>
+    </div>
+
+    <div style="text-align: right;">
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Amount Paid</div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #047857;">₹{{ "%.0f"|format(submission.registration_fee) }}</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 36px; padding-top: 16px; border-top: 1px dashed var(--border-hover); display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.78rem; color: var(--text-muted);">
+    <div>
+      Date Issued: {{ submission.created_at.strftime('%B %d, %Y') }}<br>
+      System generated receipt via LJKU CMT Portal.
+    </div>
+    <div style="text-align: center; border: 2px solid #047857; color: #047857; padding: 6px 14px; border-radius: var(--radius-sm); font-weight: 800; text-transform: uppercase;">
+      Official Seal & Verified
+    </div>
+  </div>
+
+</div>
+{% endblock %}

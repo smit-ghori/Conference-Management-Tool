@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Conference Management Tool (CMT) | LJKU & IEEE Student Branch{% endblock %}</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0A192F',
+            primaryblue: '#1E3A8A',
+            gold: '#D97706',
+            lightgold: '#F59E0B',
+            bgslate: '#F8FAFC'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- Institutional Header Banner -->
+  <header class="inst-header bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white px-4 md:px-8 py-3 border-b-4 border-amber-500 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="inst-brand flex items-center gap-3">
+        <div class="inst-logo-badge bg-white/10 border border-white/20 px-3 py-1.5 rounded-lg text-xs md:text-sm font-bold text-amber-400 flex items-center gap-2">
+          <i class="fa-solid fa-university"></i> LJKU
+        </div>
+        <div class="inst-title-block text-center sm:text-left">
+          <h1 class="text-sm md:text-base font-extrabold tracking-tight text-white">Lok Jagruti Kendra University</h1>
+          <p class="text-xs text-slate-400">CODEAPEX Technical Event &bull; IEEE Student Branch, LJ University</p>
+        </div>
+      </div>
+      
+      <div class="inst-meta text-xs md:text-sm text-slate-200 flex items-center gap-4">
+        {% if current_user %}
+          <div class="flex items-center gap-2 bg-blue-950/60 border border-blue-800/50 px-3 py-1 rounded-full">
+            <i class="fa-solid fa-user-circle text-amber-400"></i>
+            <span>Signed in: <strong class="text-white">{{ current_user.name }}</strong> (<span class="uppercase text-amber-400 font-semibold">{{ current_user.role }}</span>)</span>
+          </div>
+        {% else %}
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-amber-400"></i>
+            <span>Official Event Platform 2026</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar with Mobile Responsive Toggle -->
+  <nav class="main-nav bg-slate-900 sticky top-0 z-50 shadow-lg border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 flex justify-between items-center h-16">
+      
+      <!-- Brand Logo -->
+      <a href="{{ url_for('home') }}" class="nav-brand flex items-center gap-2 text-white text-xl font-black tracking-tight">
+        <i class="fa-solid fa-layer-group text-amber-500"></i>
+        <span>CMT<span class="text-amber-500 font-extrabold"> Portal</span></span>
+      </a>
+
+      <!-- Mobile Hamburger Button -->
+      <button id="mobileMenuBtn" class="md:hidden text-slate-300 hover:text-white p-2 text-xl focus:outline-none" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars" id="menuIcon"></i>
+      </button>
+
+      <!-- Desktop & Mobile Navigation Links -->
+      <ul id="navLinksMenu" class="hidden md:flex flex-col md:flex-row absolute md:static top-16 left-0 right-0 bg-slate-900 md:bg-transparent p-4 md:p-0 border-b md:border-none border-slate-800 md:gap-1 w-full md:w-auto shadow-xl md:shadow-none">
+        <li>
+          <a href="{{ url_for('home') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'home' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+            <i class="fa-solid fa-tower-broadcast text-emerald-400"></i> Current
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('upcoming') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'upcoming' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+            <i class="fa-solid fa-calendar-days text-blue-400"></i> Upcoming
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('archive') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'archive' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+            <i class="fa-solid fa-box-archive text-slate-400"></i> Archive
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('lookup') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'lookup' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+            <i class="fa-solid fa-magnifying-glass text-indigo-400"></i> Track Status
+          </a>
+        </li>
+
+        {% if current_user %}
+          {% if current_user.role == 'admin' %}
+            <li>
+              <a href="{{ url_for('admin') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'admin' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+                <i class="fa-solid fa-user-shield text-amber-400"></i> Admin Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('admin_settings') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'admin_settings' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+                <i class="fa-solid fa-gear text-slate-400"></i> Admin Settings
+              </a>
+            </li>
+          {% else %}
+            <li>
+              <a href="{{ url_for('my_submissions') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'my_submissions' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+                <i class="fa-solid fa-folder-user text-amber-400"></i> My Submissions
+              </a>
+            </li>
+          {% endif %}
+
+          <li>
+            <a href="{{ url_for('logout') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-slate-800 transition">
+              <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+          </li>
+
+        {% else %}
+          <li>
+            <a href="{{ url_for('login') }}" class="block md:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition {% if request.endpoint == 'login' %}text-white bg-slate-800 border-b-2 border-amber-500{% endif %}">
+              <i class="fa-solid fa-right-to-bracket"></i> Login
+            </a>
+          </li>
+          <li class="mt-2 md:mt-0">
+            <a href="{{ url_for('submit') }}" class="block md:inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow transition">
+              <i class="fa-solid fa-paper-plane"></i> Submit Abstract
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="max-w-7xl mx-auto w-full px-4 md:px-8 py-6 md:py-8 flex-1">
+    <!-- Flash Messages Container -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert-container space-y-3 mb-6">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} flex items-center justify-between p-4 rounded-xl shadow-sm border font-medium text-sm">
+              <span class="flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> {{ message }}</span>
+              <button type="button" onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-700 focus:outline-none">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Responsive Footer -->
+  <footer class="footer bg-slate-900 text-slate-400 py-8 border-t-4 border-amber-500 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs md:text-sm text-center md:text-left">
+      <div>
+        <span class="text-white font-bold">Conference Management Tool (CMT)</span> &bull; Centralized University Portal
+        <p class="text-slate-500 mt-1">Lok Jagruti Kendra University &bull; IEEE Student Branch &bull; CODEAPEX Technical Event</p>
+      </div>
+      <div>
+        <span>&copy; {{ current_year }} LJKU. All Rights Reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

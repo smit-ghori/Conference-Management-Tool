@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Author Registration & Paper Submission | CMT Portal{% endblock %}
+
+{% block content %}
+<div class="page-header bg-white rounded-2xl p-6 md:p-8 mb-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <div class="page-title">
+    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+      <i class="fa-solid fa-paper-plane text-blue-800"></i> Author Registration & Submission
+    </h2>
+    <p class="text-sm text-slate-500 mt-1">Submit your research paper or poster presentation to Lok Jagruti Kendra University conferences.</p>
+  </div>
+  <div>
+    <span class="badge badge-info text-xs md:text-sm px-4 py-2">
+      <i class="fa-solid fa-id-card"></i> Auto-Abstract ID Active
+    </span>
+  </div>
+</div>
+
+<div class="form-card bg-white rounded-2xl border border-slate-200 p-6 md:p-10 shadow-md max-w-4xl mx-auto">
+  <form action="{{ url_for('submit') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    
+    <div class="form-group">
+      <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="conference_id">
+        <i class="fa-solid fa-university"></i> Select Target Conference <span class="text-red-500">*</span>
+      </label>
+      <select name="conference_id" id="conference_id" class="form-control text-xs md:text-sm p-3 w-full" required>
+        <option value="" disabled {% if not preselect_conf_id %}selected{% endif %}>-- Choose a Conference --</option>
+        {% for conf in open_conferences %}
+          <option value="{{ conf.id }}" {% if preselect_conf_id == conf.id %}selected{% endif %}>
+            [{{ conf.department_code }}] {{ conf.acronym }} - {{ conf.title }} (Fee: ₹{{ "%.0f"|format(conf.registration_fee) }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="author_name">
+          <i class="fa-solid fa-user"></i> Author Name <span class="text-red-500">*</span>
+        </label>
+        <input type="text" name="author_name" id="author_name" class="form-control text-xs md:text-sm p-3" placeholder="e.g. Dr. Aarav Sharma" required>
+      </div>
+
+      <div>
+        <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="author_email">
+          <i class="fa-solid fa-envelope"></i> Email Address <span class="text-red-500">*</span>
+        </label>
+        <input type="email" name="author_email" id="author_email" class="form-control text-xs md:text-sm p-3" placeholder="e.g. author@institution.edu" required>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="author_phone">
+          <i class="fa-solid fa-phone"></i> Phone Number <span class="text-red-500">*</span>
+        </label>
+        <input type="tel" name="author_phone" id="author_phone" class="form-control text-xs md:text-sm p-3" placeholder="e.g. +91 9876543210" required>
+      </div>
+
+      <div>
+        <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="institution">
+          <i class="fa-solid fa-building-columns"></i> University / Institution <span class="text-red-500">*</span>
+        </label>
+        <input type="text" name="institution" id="institution" class="form-control text-xs md:text-sm p-3" placeholder="e.g. LJKU / IIT / Nirma University" required>
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block">
+        <i class="fa-solid fa-chalkboard-user"></i> Presentation Type <span class="text-red-500">*</span>
+      </label>
+      <div class="flex flex-col sm:flex-row gap-4 mt-2">
+        <label class="radio-label flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 flex-1">
+          <input type="radio" name="presentation_type" value="Paper Presentation" checked required>
+          <span class="text-xs md:text-sm font-semibold"><i class="fa-solid fa-file-lines text-blue-700"></i> Paper Presentation (Oral)</span>
+        </label>
+        <label class="radio-label flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 flex-1">
+          <input type="radio" name="presentation_type" value="Poster Presentation" required>
+          <span class="text-xs md:text-sm font-semibold"><i class="fa-solid fa-image text-purple-700"></i> Poster Presentation (Foyer)</span>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="paper_title">
+        <i class="fa-solid fa-heading"></i> Paper / Poster Title <span class="text-red-500">*</span>
+      </label>
+      <input type="text" name="paper_title" id="paper_title" class="form-control text-xs md:text-sm p-3" placeholder="Enter complete title" required>
+    </div>
+
+    <div>
+      <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="abstract_text">
+        <i class="fa-solid fa-paragraph"></i> Abstract Summary <span class="text-red-500">*</span>
+      </label>
+      <textarea name="abstract_text" id="abstract_text" class="form-control text-xs md:text-sm p-3" rows="4" placeholder="Provide a concise summary..." required></textarea>
+    </div>
+
+    <div>
+      <label class="form-label text-xs md:text-sm font-bold text-slate-900 mb-2 block" for="paper_file">
+        <i class="fa-solid fa-file-arrow-up"></i> Upload Full Paper / Draft (PDF/DOCX)
+      </label>
+      <input type="file" name="paper_file" id="paper_file" class="form-control text-xs md:text-sm p-2" accept=".pdf,.docx,.doc">
+    </div>
+
+    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <a href="{{ url_for('home') }}" class="btn btn-outline w-full sm:w-auto text-center">
+        <i class="fa-solid fa-arrow-left"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-primary w-full sm:w-auto py-3 px-8 text-sm font-bold">
+        <i class="fa-solid fa-id-badge"></i> Submit & Generate Abstract ID
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Dashboard & Reports | CMT Portal{% endblock %}
+
+{% block content %}
+<!-- Responsive Page Header -->
+<div class="page-header bg-white rounded-2xl p-6 md:p-8 mb-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <div class="page-title">
+    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+      <i class="fa-solid fa-user-shield text-blue-900"></i> Administrator Dashboard
+    </h2>
+    <p class="text-sm text-slate-500 mt-1">Search submissions, verify authors, manage conference states, and generate analytical report data.</p>
+  </div>
+  <div class="flex flex-wrap gap-2 w-full md:w-auto">
+    <a href="{{ url_for('admin_settings') }}" class="btn btn-gold text-xs md:text-sm px-4 py-2 flex-1 md:flex-initial">
+      <i class="fa-solid fa-user-gear"></i> Admin Settings (ID/Pass)
+    </a>
+    <a href="{{ url_for('export_csv') }}" class="btn btn-success text-xs md:text-sm px-4 py-2 flex-1 md:flex-initial">
+      <i class="fa-solid fa-file-csv"></i> Export CSV
+    </a>
+    <button type="button" class="btn btn-primary text-xs md:text-sm px-4 py-2 flex-1 md:flex-initial" onclick="document.getElementById('addConfModal').style.display='block'">
+      <i class="fa-solid fa-plus"></i> Add Conference
+    </button>
+  </div>
+</div>
+
+<!-- Responsive Analytical Summary Grid (1 col Mobile -> 2 cols Tablet -> 4 cols Laptop) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+      <i class="fa-solid fa-file-lines"></i>
+    </div>
+    <div>
+      <div class="text-2xl font-black text-slate-900 leading-none">{{ total_submissions }}</div>
+      <div class="text-xs font-semibold text-slate-500 mt-1">Total Submissions</div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+      <i class="fa-solid fa-indian-rupee-sign"></i>
+    </div>
+    <div>
+      <div class="text-2xl font-black text-slate-900 leading-none">₹{{ "%.0f"|format(total_revenue) }}</div>
+      <div class="text-xs font-semibold text-slate-500 mt-1">Total Revenue Collected</div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shrink-0">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div>
+      <div class="text-2xl font-black text-slate-900 leading-none">{{ accepted_count }}</div>
+      <div class="text-xs font-semibold text-slate-500 mt-1">Accepted Papers</div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl shrink-0">
+      <i class="fa-solid fa-chalkboard-user"></i>
+    </div>
+    <div>
+      <div class="text-2xl font-black text-slate-900 leading-none">{{ paper_count }} / {{ poster_count }}</div>
+      <div class="text-xs font-semibold text-slate-500 mt-1">Papers vs Posters</div>
+    </div>
+  </div>
+</div>
+
+<!-- Conference Lifecycle State Switcher Toolbar -->
+<div class="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm mb-8">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 border-b border-slate-200 pb-4">
+    <h3 class="text-base md:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+      <i class="fa-solid fa-sliders text-amber-600"></i> 
+      Manage Conference Lifecycle States (Past, Current, Upcoming)
+    </h3>
+    <span id="confCountBadge" class="badge badge-info text-xs px-3 py-1 self-start sm:self-auto">
+      Showing {{ conferences|length }} Conferences
+    </span>
+  </div>
+
+  <!-- Responsive Conference Filter Form (Instant In-Place Live Filtering) -->
+  <form id="conferencesFilterForm" onsubmit="return false;" class="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-search"></i> Search</label>
+      <input type="text" name="conf_q" id="confSearchInput" value="{{ conf_q }}" class="form-control text-xs md:text-sm" placeholder="Title or acronym...">
+    </div>
+    
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-clock-rotate-left"></i> State Filter</label>
+      <select name="conf_state" id="confStateFilter" class="form-control text-xs md:text-sm">
+        <option value="">All States</option>
+        <option value="current" {% if conf_state_filter == 'current' %}selected{% endif %}>Current (Home)</option>
+        <option value="upcoming" {% if conf_state_filter == 'upcoming' %}selected{% endif %}>Upcoming (Open)</option>
+        <option value="past" {% if conf_state_filter == 'past' %}selected{% endif %}>Past (Archived)</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-building"></i> Department</label>
+      <select name="conf_dept" id="confDeptFilter" class="form-control text-xs md:text-sm">
+        <option value="">All Departments</option>
+        {% for d in departments %}
+          <option value="{{ d.code }}" {% if conf_dept_filter == d.code %}selected{% endif %}>{{ d.code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="flex gap-2 col-span-1 sm:col-span-2 lg:col-span-2">
+      <button type="button" id="resetConfFiltersBtn" class="btn btn-outline text-xs md:text-sm py-2 px-4 w-full" title="Clear Filters">
+        <i class="fa-solid fa-rotate-left"></i> Clear Filters
+      </button>
+    </div>
+  </form>
+
+  <!-- Responsive Table Scroll Wrapper -->
+  <div class="overflow-x-auto w-full rounded-xl border border-slate-200">
+    <table class="table min-w-[700px] w-full text-sm" id="conferencesTable">
+      <thead>
+        <tr class="bg-slate-100 text-slate-800 font-bold">
+          <th class="p-3">Acronym & Title</th>
+          <th class="p-3">Department</th>
+          <th class="p-3">Current State</th>
+          <th class="p-3">Dates</th>
+          <th class="p-3">Change State Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conf in conferences %}
+          <tr class="border-b border-slate-100 hover:bg-slate-50 transition" data-acronym="{{ conf.acronym|lower }}" data-title="{{ conf.title|lower }}" data-state="{{ conf.state }}" data-dept="{{ conf.department_code }}">
+            <td class="p-3">
+              <a href="{{ url_for('conference_detail', conf_id=conf.id) }}" class="no-underline hover:text-blue-700">
+                <strong class="text-slate-900">{{ conf.acronym }}</strong> - <span class="text-slate-700">{{ conf.title }}</span>
+              </a>
+            </td>
+            <td class="p-3"><span class="conf-dept-chip">{{ conf.department_code }}</span></td>
+            <td class="p-3"><span class="badge badge-{{ conf.state }}">{{ conf.state|upper }}</span></td>
+            <td class="p-3 whitespace-nowrap text-xs text-slate-600">{{ conf.start_date }} - {{ conf.end_date }}</td>
+            <td class="p-3">
+              <form action="{{ url_for('admin') }}" method="POST" class="flex items-center gap-2">
+                <input type="hidden" name="action" value="change_conf_state">
+                <input type="hidden" name="conf_id" value="{{ conf.id }}">
+                <select name="new_state" class="form-control text-xs p-1.5 w-32">
+                  <option value="upcoming" {% if conf.state == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                  <option value="current" {% if conf.state == 'current' %}selected{% endif %}>Current</option>
+                  <option value="past" {% if conf.state == 'past' %}selected{% endif %}>Past (Archive)</option>
+                </select>
+                <button type="submit" class="btn btn-outline btn-sm text-xs py-1 px-3">Update</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Responsive Search & Filter Controls for Submissions (Instant In-Place Live Filtering) -->
+<div class="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm mb-8">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+    <h3 class="text-base md:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+      <i class="fa-solid fa-magnifying-glass text-blue-700"></i> Search & Filter Author Submissions
+    </h3>
+    <span id="subCountBadge" class="badge badge-info text-xs px-3 py-1">
+      Showing {{ submissions|length }} Submissions
+    </span>
+  </div>
+
+  <form id="submissionsFilterForm" onsubmit="return false;" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-search"></i> Search Query</label>
+      <input type="text" name="q" value="{{ search_q }}" class="form-control text-xs md:text-sm" id="subSearchInput" placeholder="Abstract ID, Author, Title...">
+    </div>
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-building"></i> Department</label>
+      <select name="dept" id="subDeptFilter" class="form-control text-xs md:text-sm">
+        <option value="">All Departments</option>
+        {% for d in departments %}
+          <option value="{{ d.code }}" {% if dept_filter == d.code %}selected{% endif %}>{{ d.code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-circle-check"></i> Verification Status</label>
+      <select name="status" id="subStatusFilter" class="form-control text-xs md:text-sm">
+        <option value="">All Statuses</option>
+        <option value="Under Review" {% if status_filter == 'Under Review' %}selected{% endif %}>Under Review</option>
+        <option value="Verified" {% if status_filter == 'Verified' %}selected{% endif %}>Verified</option>
+        <option value="Accepted" {% if status_filter == 'Accepted' %}selected{% endif %}>Accepted</option>
+        <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label text-xs font-bold text-slate-600 mb-1 block"><i class="fa-solid fa-chalkboard-user"></i> Presentation Type</label>
+      <select name="type" id="subTypeFilter" class="form-control text-xs md:text-sm">
+        <option value="">All Types</option>
+        <option value="Paper Presentation" {% if type_filter == 'Paper Presentation' %}selected{% endif %}>Paper Presentation</option>
+        <option value="Poster Presentation" {% if type_filter == 'Poster Presentation' %}selected{% endif %}>Poster Presentation</option>
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button type="button" id="resetSubFiltersBtn" class="btn btn-outline text-xs md:text-sm py-2 px-3 w-full" title="Clear Filters"><i class="fa-solid fa-rotate-left"></i> Clear Filters</button>
+    </div>
+  </form>
+</div>
+
+<!-- Responsive Submissions Table Container -->
+<div class="overflow-x-auto w-full rounded-2xl border border-slate-200 bg-white shadow-sm mb-8">
+  <table class="table min-w-[850px] w-full text-sm" id="submissionsTable">
+    <thead>
+      <tr class="bg-slate-100 text-slate-800 font-bold">
+        <th class="p-3">Abstract ID</th>
+        <th class="p-3">Author & Email</th>
+        <th class="p-3">Paper Title</th>
+        <th class="p-3">Dept & Type</th>
+        <th class="p-3">Verification Status</th>
+        <th class="p-3">Payment</th>
+        <th class="p-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in submissions %}
+        <tr class="sub-row border-b border-slate-100 hover:bg-slate-50 transition" 
+            data-abstract="{{ s.abstract_id|lower }}" 
+            data-author="{{ s.author_name|lower }}" 
+            data-email="{{ s.author_email|lower }}" 
+            data-title="{{ s.paper_title|lower }}" 
+            data-dept="{{ s.department_code }}" 
+            data-status="{{ s.verification_status }}" 
+            data-type="{{ s.presentation_type }}">
+          <td class="p-3 font-extrabold text-amber-600">{{ s.abstract_id }}</td>
+          <td class="p-3">
+            <strong class="text-slate-900 block">{{ s.author_name }}</strong>
+            <small class="text-slate-500">{{ s.author_email }}</small>
+          </td>
+          <td class="p-3 max-w-[240px]">
+            <div class="font-semibold text-slate-900 leading-snug">{{ s.paper_title }}</div>
+            <small class="text-slate-500 block truncate">{{ s.institution }}</small>
+          </td>
+          <td class="p-3">
+            <span class="conf-dept-chip">{{ s.department_code }}</span>
+            <small class="text-slate-500 block mt-0.5">{{ s.presentation_type }}</small>
+          </td>
+          <td class="p-3">
+            <span class="badge 
+              {% if s.verification_status == 'Accepted' %}badge-current
+              {% elif s.verification_status == 'Verified' %}badge-upcoming
+              {% elif s.verification_status == 'Rejected' %}badge-urgent
+              {% else %}badge-schedule{% endif %}">
+              {{ s.verification_status }}
+            </span>
+          </td>
+          <td class="p-3">
+            {% if s.payment_status == 'Paid' %}
+              <span class="badge badge-paid"><i class="fa-solid fa-check"></i> Paid</span>
+            {% else %}
+              <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>
+            {% endif %}
+          </td>
+          <td class="p-3 min-w-[160px]">
+            <form action="{{ url_for('admin') }}" method="POST" class="flex flex-col gap-1.5">
+              <input type="hidden" name="action" value="update_submission_status">
+              <input type="hidden" name="submission_id" value="{{ s.id }}">
+              
+              <div class="grid grid-cols-2 gap-1">
+                <select name="verification_status" class="form-control text-[11px] p-1">
+                  <option value="Under Review" {% if s.verification_status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                  <option value="Verified" {% if s.verification_status == 'Verified' %}selected{% endif %}>Verified</option>
+                  <option value="Accepted" {% if s.verification_status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                  <option value="Rejected" {% if s.verification_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+
+                <select name="payment_status" class="form-control text-[11px] p-1">
+                  <option value="Pending" {% if s.payment_status == 'Pending' %}selected{% endif %}>Pending</option>
+                  <option value="Paid" {% if s.payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-outline text-xs py-1 px-2 w-full">Save Status</button>
+            </form>
+            <form action="{{ url_for('delete_submission', sub_id=s.id) }}" method="POST" class="mt-1" onsubmit="return confirm('Delete submission {{ s.abstract_id }} permanently?');">
+              <button type="submit" class="btn btn-outline text-xs py-0.5 px-2 w-full text-red-600 border-red-300 hover:bg-red-50">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      <tr id="noSubmissionsRow" class="hidden">
+        <td colspan="7" class="p-8 text-center text-slate-500 font-semibold">
+          <i class="fa-solid fa-folder-open text-2xl mb-2 block text-slate-400"></i> No submissions match the selected filter criteria.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Dialog to Add New Conference (Fully Responsive Modal Popup) -->
+<div id="addConfModal" class="hidden fixed inset-0 bg-slate-900/70 z-[100] p-4 overflow-y-auto">
+  <div class="bg-white max-w-3xl w-full mx-auto my-8 rounded-2xl p-6 md:p-8 shadow-2xl border border-slate-200">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-4 mb-6">
+      <h3 class="text-lg md:text-xl font-extrabold text-slate-900">Add New Conference to System</h3>
+      <button type="button" onclick="document.getElementById('addConfModal').style.display='none'" class="text-slate-400 hover:text-slate-700 text-2xl font-bold focus:outline-none">&times;</button>
+    </div>
+
+    <form action="{{ url_for('admin') }}" method="POST" class="space-y-4">
+      <input type="hidden" name="action" value="add_conference">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Conference Title</label>
+          <input type="text" name="title" class="form-control text-sm" placeholder="e.g. International Conference on AI" required>
+        </div>
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Acronym</label>
+          <input type="text" name="acronym" class="form-control text-sm" placeholder="e.g. ICNC-2026" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Department</label>
+          <select name="department_code" class="form-control text-sm" required>
+            {% for d in departments %}
+              <option value="{{ d.code }}">{{ d.name }} ({{ d.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Initial State</label>
+          <select name="state" class="form-control text-sm" required>
+            <option value="upcoming">Upcoming</option>
+            <option value="current">Current (Home)</option>
+            <option value="past">Past (Archive)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block"><i class="fa-regular fa-calendar-check"></i> Start Date</label>
+          <input type="date" name="start_date" class="form-control text-sm" required>
+        </div>
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block"><i class="fa-regular fa-calendar-xmark"></i> End Date</label>
+          <input type="date" name="end_date" class="form-control text-sm" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block"><i class="fa-solid fa-hourglass-half"></i> Submission Deadline</label>
+          <input type="date" name="submission_deadline" class="form-control text-sm">
+        </div>
+        <div>
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block"><i class="fa-solid fa-indian-rupee-sign"></i> Registration Fee (₹)</label>
+          <input type="number" name="registration_fee" class="form-control text-sm" value="1500" required>
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Venue</label>
+        <input type="text" name="venue" class="form-control text-sm" placeholder="e.g. Main Auditorium, LJKU" required>
+      </div>
+
+      <div>
+        <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Description</label>
+        <textarea name="description" class="form-control text-sm" rows="3" required></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <button type="button" onclick="document.getElementById('addConfModal').style.display='none'" class="btn btn-outline text-sm py-2 px-4">Cancel</button>
+        <button type="submit" class="btn btn-primary text-sm py-2 px-5"><i class="fa-solid fa-plus"></i> Save & Add Conference</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

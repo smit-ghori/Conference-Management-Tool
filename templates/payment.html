@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Conference Fee Payment | CMT Gateway{% endblock %}
+
+{% block extra_head %}
+<style>
+  .pay-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-light); }
+  .pay-tab { padding: 12px 20px; font-weight: 700; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: var(--transition); }
+  .pay-tab.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); background: #EFF6FF; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+  .pay-method-content { display: none; }
+  .pay-method-content.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header bg-white rounded-2xl p-6 md:p-8 mb-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <div class="page-title">
+    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+      <i class="fa-solid fa-credit-card text-emerald-600"></i> Integrated Payment Gateway
+    </h2>
+    <p class="text-sm text-slate-500 mt-1">Secure conference registration fee portal for Lok Jagruti Kendra University & IEEE Events.</p>
+  </div>
+  <div>
+    <span class="badge badge-paid text-xs md:text-sm px-4 py-2">
+      <i class="fa-solid fa-lock"></i> 256-Bit SSL Encrypted
+    </span>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+  
+  <!-- Left Box: Order Summary -->
+  <div class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+    <div>
+      <h3 class="text-base md:text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-receipt text-blue-700"></i> Registration Summary
+      </h3>
+
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+        <div class="text-xs font-bold text-amber-600 uppercase tracking-wider">Unique Abstract ID</div>
+        <div class="text-xl md:text-2xl font-black text-slate-900 mt-1">{{ submission.abstract_id }}</div>
+      </div>
+
+      <ul class="conf-meta-list text-xs md:text-sm text-slate-600 space-y-3">
+        <li><i class="fa-solid fa-user text-blue-700 w-4"></i> <strong>Author:</strong> {{ submission.author_name }}</li>
+        <li><i class="fa-solid fa-envelope text-blue-700 w-4"></i> <strong>Email:</strong> {{ submission.author_email }}</li>
+        <li><i class="fa-solid fa-university text-blue-700 w-4"></i> <strong>Conference:</strong> {{ submission.conference.acronym }}</li>
+        <li><i class="fa-solid fa-chalkboard-user text-blue-700 w-4"></i> <strong>Track:</strong> {{ submission.presentation_type }}</li>
+        <li><i class="fa-solid fa-heading text-blue-700 w-4"></i> <strong>Title:</strong> {{ submission.paper_title }}</li>
+      </ul>
+    </div>
+
+    <div class="bg-emerald-50/80 p-5 rounded-xl border border-emerald-200 flex justify-between items-center mt-6">
+      <div>
+        <div class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Registration Fee</div>
+        <div class="text-2xl font-black text-emerald-900">₹{{ "%.0f"|format(submission.registration_fee) }}</div>
+      </div>
+      <i class="fa-solid fa-shield-halved text-3xl text-emerald-600"></i>
+    </div>
+  </div>
+
+  <!-- Right Box: Payment Options & Simulation Form -->
+  <div class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-sm">
+    
+    <div class="pay-tabs text-xs md:text-sm">
+      <div class="pay-tab active" data-target="method_upi">
+        <i class="fa-solid fa-qrcode"></i> Instant UPI / QR
+      </div>
+      <div class="pay-tab" data-target="method_card">
+        <i class="fa-solid fa-credit-card"></i> Card
+      </div>
+      <div class="pay-tab" data-target="method_netbank">
+        <i class="fa-solid fa-building-columns"></i> Net Banking
+      </div>
+    </div>
+
+    <form action="{{ url_for('payment', sub_id=submission.id) }}" method="POST">
+      <input type="hidden" name="payment_method" id="selected_payment_method" value="upi">
+
+      <!-- UPI Tab Content -->
+      <div id="method_upi" class="pay-method-content active">
+        <div class="text-center py-4">
+          <div class="bg-slate-50 w-40 h-40 mx-auto mb-4 border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center">
+            <i class="fa-solid fa-qrcode text-6xl text-slate-800"></i>
+            <span class="text-[10px] font-bold text-slate-500 mt-2">Scan with GPay / PhonePe</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Or enter UPI ID / VPA below:</p>
+          <div class="form-group">
+            <input type="text" class="form-control text-xs md:text-sm p-3" placeholder="e.g. author@okaxis / 9876543210@upi">
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Tab Content -->
+      <div id="method_card" class="pay-method-content">
+        <div class="form-group mb-3">
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Card Number</label>
+          <input type="text" class="form-control text-xs md:text-sm p-2.5" placeholder="4532 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 8921">
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="form-group">
+            <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Expiry (MM/YY)</label>
+            <input type="text" class="form-control text-xs md:text-sm p-2.5" placeholder="11/28">
+          </div>
+          <div class="form-group">
+            <label class="form-label text-xs font-bold text-slate-700 mb-1 block">CVV</label>
+            <input type="password" class="form-control text-xs md:text-sm p-2.5" placeholder="&bull;&bull;&bull;">
+          </div>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Cardholder Name</label>
+          <input type="text" class="form-control text-xs md:text-sm p-2.5" placeholder="Name on Card">
+        </div>
+      </div>
+
+      <!-- Net Banking Tab Content -->
+      <div id="method_netbank" class="pay-method-content">
+        <div class="form-group mb-4">
+          <label class="form-label text-xs font-bold text-slate-700 mb-1 block">Select Bank</label>
+          <select class="form-control text-xs md:text-sm p-2.5">
+            <option>State Bank of India (SBI)</option>
+            <option>HDFC Bank</option>
+            <option>ICICI Bank</option>
+            <option>Axis Bank</option>
+            <option>Kotak Mahindra Bank</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success w-full py-3.5 text-sm md:text-base font-bold mt-4 shadow">
+        <i class="fa-solid fa-lock"></i> Authorize & Pay ₹{{ "%.0f"|format(submission.registration_fee) }} Now
+      </button>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}My Submissions Dashboard | CMT Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">
+    <h2><i class="fa-solid fa-user-gear" style="color: var(--primary-blue);"></i> Author Profile & Submissions</h2>
+    <p>Welcome, <strong>{{ user.name }}</strong> ({{ user.email }}). Manage your submitted papers, payment receipts, and review statuses.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('submit') }}" class="btn btn-gold">
+      <i class="fa-solid fa-plus"></i> Submit New Paper / Poster
+    </a>
+  </div>
+</div>
+
+{% if submissions %}
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Abstract ID</th>
+          <th>Paper / Poster Title</th>
+          <th>Conference</th>
+          <th>Presentation Type</th>
+          <th>Verification Status</th>
+          <th>Payment Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in submissions %}
+          <tr>
+            <td><strong style="color: var(--accent-gold); font-size: 1.05rem;">{{ s.abstract_id }}</strong></td>
+            <td>
+              <strong style="color: var(--primary-navy);">{{ s.paper_title }}</strong><br>
+              <small style="color: var(--text-muted);">Submitted: {{ s.created_at.strftime('%b %d, %Y') }}</small>
+            </td>
+            <td>{{ s.conference.acronym }}</td>
+            <td><i class="fa-solid fa-chalkboard-user"></i> {{ s.presentation_type }}</td>
+            <td>
+              <span class="badge 
+                {% if s.verification_status == 'Accepted' %}badge-current
+                {% elif s.verification_status == 'Verified' %}badge-upcoming
+                {% elif s.verification_status == 'Rejected' %}badge-urgent
+                {% else %}badge-schedule{% endif %}">
+                {{ s.verification_status }}
+              </span>
+            </td>
+            <td>
+              {% if s.payment_status == 'Paid' %}
+                <span class="badge badge-paid"><i class="fa-solid fa-check"></i> Paid</span>
+              {% else %}
+                <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Fee Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.payment_status == 'Paid' %}
+                <a href="{{ url_for('receipt', sub_id=s.id) }}" class="btn btn-outline btn-sm">
+                  <i class="fa-solid fa-receipt"></i> Receipt
+                </a>
+              {% else %}
+                <a href="{{ url_for('payment', sub_id=s.id) }}" class="btn btn-gold btn-sm">
+                  <i class="fa-solid fa-credit-card"></i> Pay Fee
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div style="background: #FFFFFF; border-radius: var(--radius-lg); padding: 48px; text-align: center; border: 1px solid var(--border-light);">
+    <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 16px;"></i>
+    <h3 style="font-size: 1.3rem; color: var(--primary-navy);">No Submissions Found for Your Account</h3>
+    <p style="color: var(--text-muted); margin-top: 8px;">You haven't submitted any papers or posters yet.</p>
+    <div style="margin-top: 20px;">
+      <a href="{{ url_for('submit') }}" class="btn btn-primary">
+        <i class="fa-solid fa-paper-plane"></i> Submit Paper / Poster Now
+      </a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

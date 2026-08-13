@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Past Conferences Archive | Conference Management Tool (CMT){% endblock %}
+
+{% block content %}
+<div class="page-header bg-white rounded-2xl p-6 md:p-8 mb-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <div class="page-title">
+    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+      <i class="fa-solid fa-box-archive text-slate-500"></i> Past Conferences Archive
+    </h2>
+    <p class="text-sm text-slate-500 mt-1">Completed conferences retained as official academic records with final outcome reports, publications, and materials for reference.</p>
+  </div>
+  <div>
+    <span class="badge badge-past text-xs md:text-sm px-4 py-2">
+      <i class="fa-solid fa-clock-rotate-left"></i> Historical Records
+    </span>
+  </div>
+</div>
+
+<!-- Department Filter Bar -->
+<div class="dept-filter-bar bg-white p-3 md:p-4 rounded-xl border border-slate-200 mb-6 shadow-sm flex items-center gap-2 overflow-x-auto">
+  <span class="dept-filter-title text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap mr-2">
+    <i class="fa-solid fa-filter"></i> Dept Filter:
+  </span>
+  <a href="{{ url_for('archive') }}" class="dept-btn text-xs md:text-sm px-4 py-2 rounded-full whitespace-nowrap {% if not selected_dept %}active{% endif %}">
+    All Departments
+  </a>
+  {% for dept in departments %}
+    <a href="{{ url_for('archive', dept=dept.code) }}" class="dept-btn text-xs md:text-sm px-4 py-2 rounded-full whitespace-nowrap {% if selected_dept == dept.code %}active{% endif %}">
+      <i class="fa-solid {{ dept.icon }}"></i> {{ dept.code }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if past_conferences %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    {% for conf in past_conferences %}
+      <div class="conf-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="conf-card-header p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-start gap-2">
+          <span class="conf-dept-chip text-xs font-bold px-2.5 py-1 rounded-md">{{ conf.department.name }} ({{ conf.department_code }})</span>
+          <span class="badge badge-past text-xs">Archived</span>
+        </div>
+        
+        <div class="conf-card-body p-6 flex-1 flex flex-col">
+          <div class="conf-acronym text-xs font-black text-amber-600 tracking-wider mb-1">{{ conf.acronym }}</div>
+          <h3 class="conf-title text-lg font-bold text-slate-900 leading-snug mb-3">{{ conf.title }}</h3>
+          
+          <ul class="conf-meta-list text-xs md:text-sm text-slate-600 space-y-2 mb-4">
+            <li class="flex items-center gap-2"><i class="fa-regular fa-calendar text-blue-800 w-4"></i> <strong>Conducted:</strong> {{ conf.start_date }} - {{ conf.end_date }}</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-800 w-4"></i> <strong>Venue:</strong> {{ conf.venue }}</li>
+          </ul>
+
+          <div class="bg-slate-50 border-l-4 border-slate-900 p-3.5 rounded-r-xl mb-4 text-xs">
+            <div class="font-bold text-slate-900 uppercase tracking-wider mb-1">
+              <i class="fa-solid fa-chart-pie"></i> Outcome Report Summary
+            </div>
+            <p class="text-slate-700 leading-relaxed">
+              {{ conf.report_summary or "Final outcome report and delegate proceedings archived in university library." }}
+            </p>
+          </div>
+
+          <div class="materials-block bg-slate-50 border border-slate-200 rounded-xl p-3 mt-auto mb-4">
+            <div class="materials-title text-[11px] font-bold text-slate-500 uppercase mb-2"><i class="fa-solid fa-file-arrow-down"></i> Archived Materials</div>
+            <div class="materials-btns flex gap-2">
+              {% if conf.brochure_filename %}
+                <a href="{{ url_for('download_file', file_type='brochures', filename=conf.brochure_filename) }}" class="btn-material btn-material-brochure text-xs py-1.5 px-3 flex-1 text-center font-semibold">
+                  <i class="fa-solid fa-file-pdf text-red-600"></i> Brochure
+                </a>
+              {% endif %}
+              {% if conf.flyer_filename %}
+                <a href="{{ url_for('download_file', file_type='flyers', filename=conf.flyer_filename) }}" class="btn-material btn-material-flyer text-xs py-1.5 px-3 flex-1 text-center font-semibold">
+                  <i class="fa-solid fa-image text-purple-600"></i> Flyer
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conf-card-footer p-4 bg-slate-50 border-t border-slate-100">
+          <a href="{{ url_for('conference_detail', conf_id=conf.id) }}" class="btn btn-outline text-xs py-2 px-3 w-full text-center">
+            <i class="fa-solid fa-newspaper"></i> View Archived Proceedings
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+    <i class="fa-solid fa-box-archive text-5xl text-slate-400 mb-4"></i>
+    <h3 class="text-lg font-bold text-slate-900">No Archived Conferences Found</h3>
+    <p class="text-sm text-slate-500 mt-1">Select a different department or clear filter to view past records.</p>
+  </div>
+{% endif %}
+{% endblock %}

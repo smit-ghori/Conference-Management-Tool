@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Track Submission Status | CMT Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">
+    <h2><i class="fa-solid fa-magnifying-glass" style="color: var(--primary-blue);"></i> Track Submission & Verification Status</h2>
+    <p>Look up your paper or poster submission using your unique Abstract ID or registered email address.</p>
+  </div>
+</div>
+
+<div class="form-card" style="max-width: 650px; margin-bottom: 28px;">
+  <form action="{{ url_for('lookup') }}" method="POST">
+    <div class="form-group">
+      <label class="form-label" for="query_str">
+        <i class="fa-solid fa-id-card"></i> Enter Abstract ID or Author Email
+      </label>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" name="query_str" id="query_str" class="form-control" 
+               placeholder="e.g. CMT-2026-CSE-1001 or author@domain.com" 
+               value="{{ query_str }}" required>
+        <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+          <i class="fa-solid fa-search"></i> Search
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if submission %}
+  <div style="background: #FFFFFF; border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border-light); box-shadow: var(--shadow-md); max-width: 850px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-light); padding-bottom: 16px; margin-bottom: 20px;">
+      <div>
+        <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-gold); text-transform: uppercase;">Abstract Reference ID</span>
+        <h3 style="font-size: 1.6rem; color: var(--primary-navy); font-weight: 800;">{{ submission.abstract_id }}</h3>
+      </div>
+      <div>
+        <span class="badge 
+          {% if submission.verification_status == 'Accepted' %}badge-current
+          {% elif submission.verification_status == 'Verified' %}badge-upcoming
+          {% elif submission.verification_status == 'Rejected' %}badge-urgent
+          {% else %}badge-schedule{% endif %}" style="font-size: 0.9rem; padding: 8px 16px;">
+          <i class="fa-solid fa-clipboard-check"></i> {{ submission.verification_status }}
+        </span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.92rem; margin-bottom: 24px;">
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Paper / Poster Title</div>
+        <div style="font-weight: 700; color: var(--primary-navy); font-size: 1.05rem;">{{ submission.paper_title }}</div>
+      </div>
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Conference</div>
+        <div style="font-weight: 600;">{{ submission.conference.acronym }} - {{ submission.conference.title }}</div>
+      </div>
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Author Name</div>
+        <div style="font-weight: 600;">{{ submission.author_name }}</div>
+      </div>
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Institution</div>
+        <div style="font-weight: 600;">{{ submission.institution }}</div>
+      </div>
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Presentation Type</div>
+        <div style="font-weight: 600;"><i class="fa-solid fa-chalkboard-user"></i> {{ submission.presentation_type }}</div>
+      </div>
+      <div>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Payment Status</div>
+        <div>
+          {% if submission.payment_status == 'Paid' %}
+            <span class="badge badge-paid"><i class="fa-solid fa-check-double"></i> Registration Fee Paid</span>
+          {% else %}
+            <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Fee Pending (₹{{ "%.0f"|format(submission.registration_fee) }})</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions block -->
+    <div style="background: #F8FAFC; padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        {% if submission.payment_status == 'Paid' %}
+          <div style="font-size: 0.88rem; color: var(--success-green); font-weight: 700;">
+            <i class="fa-solid fa-circle-check"></i> Registration & Verification Complete.
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Payment Tx Ref: {{ submission.payment_ref }}</div>
+        {% else %}
+          <div style="font-size: 0.88rem; color: var(--warning-amber); font-weight: 700;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Complete your fee payment to finalize presentation badge.
+          </div>
+        {% endif %}
+      </div>
+      <div>
+        {% if submission.payment_status == 'Paid' %}
+          <a href="{{ url_for('receipt', sub_id=submission.id) }}" class="btn btn-outline">
+            <i class="fa-solid fa-receipt"></i> View Official Receipt
+          </a>
+        {% else %}
+          <a href="{{ url_for('payment', sub_id=submission.id) }}" class="btn btn-gold">
+            <i class="fa-solid fa-credit-card"></i> Pay Registration Fee (₹{{ "%.0f"|format(submission.registration_fee) }})
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+{% endif %}
+{% endblock %}

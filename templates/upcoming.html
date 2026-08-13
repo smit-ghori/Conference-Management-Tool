@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Upcoming Conferences | Conference Management Tool (CMT){% endblock %}
+
+{% block content %}
+<div class="page-header bg-white rounded-2xl p-6 md:p-8 mb-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <div class="page-title">
+    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 flex items-center gap-3">
+      <i class="fa-solid fa-calendar-days text-blue-700"></i> Upcoming Conferences
+    </h2>
+    <p class="text-sm text-slate-500 mt-1">Future conferences open for paper submission, author registration, dates, deadlines, and Call for Papers (CFP).</p>
+  </div>
+  <div>
+    <a href="{{ url_for('submit') }}" class="btn btn-gold text-xs md:text-sm px-5 py-2.5">
+      <i class="fa-solid fa-paper-plane"></i> Register & Submit Paper
+    </a>
+  </div>
+</div>
+
+<!-- Department Filter Bar -->
+<div class="dept-filter-bar bg-white p-3 md:p-4 rounded-xl border border-slate-200 mb-6 shadow-sm flex items-center gap-2 overflow-x-auto">
+  <span class="dept-filter-title text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap mr-2">
+    <i class="fa-solid fa-filter"></i> Dept Filter:
+  </span>
+  <a href="{{ url_for('upcoming') }}" class="dept-btn text-xs md:text-sm px-4 py-2 rounded-full whitespace-nowrap {% if not selected_dept %}active{% endif %}">
+    All Departments
+  </a>
+  {% for dept in departments %}
+    <a href="{{ url_for('upcoming', dept=dept.code) }}" class="dept-btn text-xs md:text-sm px-4 py-2 rounded-full whitespace-nowrap {% if selected_dept == dept.code %}active{% endif %}">
+      <i class="fa-solid {{ dept.icon }}"></i> {{ dept.code }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if upcoming_conferences %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    {% for conf in upcoming_conferences %}
+      <div class="conf-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div class="conf-card-header p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-start gap-2">
+          <span class="conf-dept-chip text-xs font-bold px-2.5 py-1 rounded-md">{{ conf.department.name }} ({{ conf.department_code }})</span>
+          <span class="badge badge-upcoming text-xs"><i class="fa-solid fa-user-plus"></i> Open</span>
+        </div>
+        
+        <div class="conf-card-body p-6 flex-1 flex flex-col">
+          <div class="conf-acronym text-xs font-black text-amber-600 tracking-wider mb-1">{{ conf.acronym }}</div>
+          <h3 class="conf-title text-lg font-bold text-slate-900 leading-snug mb-3">{{ conf.title }}</h3>
+          
+          <ul class="conf-meta-list text-xs md:text-sm text-slate-600 space-y-2 mb-4">
+            <li class="flex items-center gap-2"><i class="fa-regular fa-calendar text-blue-800 w-4"></i> <strong>Dates:</strong> {{ conf.start_date }} - {{ conf.end_date }}</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-hourglass-half text-red-600 w-4"></i> <strong>Deadline:</strong> {{ conf.submission_deadline }}</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-800 w-4"></i> <strong>Venue:</strong> {{ conf.venue }}</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-indian-rupee-sign text-blue-800 w-4"></i> <strong>Fee:</strong> ₹{{ "%.0f"|format(conf.registration_fee) }}</li>
+          </ul>
+
+          <p class="conf-desc text-xs md:text-sm text-slate-600 mb-4 line-clamp-3"><strong>Call For Papers:</strong> {{ conf.call_for_papers or conf.description }}</p>
+
+          <div class="materials-block bg-slate-50 border border-slate-200 rounded-xl p-3 mt-auto mb-4">
+            <div class="materials-title text-[11px] font-bold text-slate-500 uppercase mb-2"><i class="fa-solid fa-folder-open"></i> Materials</div>
+            <div class="materials-btns flex gap-2">
+              {% if conf.brochure_filename %}
+                <a href="{{ url_for('download_file', file_type='brochures', filename=conf.brochure_filename) }}" class="btn-material btn-material-brochure text-xs py-1.5 px-3 flex-1 text-center font-semibold">
+                  <i class="fa-solid fa-file-pdf text-red-600"></i> Brochure
+                </a>
+              {% endif %}
+              {% if conf.flyer_filename %}
+                <a href="{{ url_for('download_file', file_type='flyers', filename=conf.flyer_filename) }}" class="btn-material btn-material-flyer text-xs py-1.5 px-3 flex-1 text-center font-semibold">
+                  <i class="fa-solid fa-image text-purple-600"></i> Flyer
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="conf-card-footer p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+          <a href="{{ url_for('conference_detail', conf_id=conf.id) }}" class="btn btn-outline btn-sm text-xs py-2 px-3">
+            <i class="fa-solid fa-circle-info"></i> Tracks
+          </a>
+          <a href="{{ url_for('submit', conf_id=conf.id) }}" class="btn btn-primary btn-sm text-xs py-2 px-3">
+            <i class="fa-solid fa-paper-plane"></i> Submit Abstract
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+    <i class="fa-solid fa-folder-open text-5xl text-slate-400 mb-4"></i>
+    <h3 class="text-lg font-bold text-slate-900">No Upcoming Conferences Found</h3>
+    <p class="text-sm text-slate-500 mt-1">Try clearing the department filter to view all upcoming events.</p>
+  </div>
+{% endif %}
+{% endblock %}
